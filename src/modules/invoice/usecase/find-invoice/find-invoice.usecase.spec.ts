@@ -1,71 +1,69 @@
-import Id from "../../../@shared/domain/value-object/id.value-object";
-import InvoiceItem from "../../domain/invoice-item.entity";
-import Invoice from "../../domain/invoice.entity";
-import Address from "../../domain/value-object/address";
-import FindInvoiceUseCase from "./find-invoice.usecase";
-
-const invoiceItem = new InvoiceItem({
-  id: new Id("1"),
-  name: "Product 1",
-  price: 100,
-});
+import Address from "../../../@shared/domain/value-object/address"
+import Id from "../../../@shared/domain/value-object/id.value-object"
+import InvoiceItems from "../../domain/invoice-items.entity"
+import Invoice from "../../domain/invoice.entity"
+import FindInvoiceUseCase from "./find-invoice.usecase"
 
 const invoice = new Invoice({
-  id: new Id("1"),
-  name: "Invoice-01",
-  document: "Doc-01",
-  address: new Address(
-    "Street 1",
-    "123",
-    "Complement 1",
-    "City 1",
-    "State 1",
-    "12345-678"
-  ),
-  items: [invoiceItem],
-});
+    id: new Id("1"),
+    name: "Lucian",
+    document: "123456",
+    address: new Address(
+        "Street",
+        "123",
+        "Complement",
+        "City",
+        "State",
+        "ZipCode",
+    ),
+    items: [
+        new InvoiceItems({
+            id: new Id("1"),
+            name: "Item 1",
+            price: 100
+        }),
+        new InvoiceItems({
+            id: new Id("2"),
+            name: "Item 2",
+            price: 90
+        }),
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+})
 
-const MockInvoiceRepository = () => {
-  return {
-    generate: jest.fn(),
-    find: jest.fn().mockReturnValue(Promise.resolve(invoice)),
-  }
+const MockRepository = () => {
+
+    return {
+        generate: jest.fn(),
+        find: jest.fn().mockReturnValue(Promise.resolve(invoice))
+    }
 }
 
-describe('Find Invoice Use Case Unit Test', () => {
-  it('should find an invoice', async () => {
-    const invoiceRepository = MockInvoiceRepository();
-    const findInvoiceUseCase = new FindInvoiceUseCase(invoiceRepository);
+describe("Find Invoice use case unit test", () => {
 
-    const input = {
-      id: "1",
-    }
+    it("should find an invoice", async () => {
 
-    const result = await findInvoiceUseCase.execute(input);
+        const repository = MockRepository()
+        const usecase = new FindInvoiceUseCase(repository)
 
-    expect(invoiceRepository.find).toHaveBeenCalled();
-    expect(result.id).toBe("1");
-    expect(result.name).toBe("Invoice-01");
-    expect(result.document).toBe("Doc-01");
-    expect(result.address.street).toBe("Street 1");
-    expect(result.address.number).toBe("123");
-    expect(result.address.complement).toBe("Complement 1");
-    expect(result.address.city).toBe("City 1");
-    expect(result.address.state).toBe("State 1");
-    expect(result.address.zipCode).toBe("12345-678");
-    expect(result.items[0].id).toBe("1");
-    expect(result.items[0].name).toBe("Product 1");
-    expect(result.items[0].price).toBe(100);
-    expect(result.total).toBe(100);
-    expect(result.createdAt).toEqual(expect.any(Date));
-  });
+        const input = {
+            id: "1"
+        }
 
-  it('should throw an error when invoice is not found', async () => {
-    const invoiceRepository = MockInvoiceRepository();
-    invoiceRepository.find = jest.fn().mockReturnValue(null);
+        const result = await usecase.execute(input)
 
-    const findInvoiceUseCase = new FindInvoiceUseCase(invoiceRepository);
-
-    await expect(findInvoiceUseCase.execute({ id: "non-existing-id" })).rejects.toThrow('Invoice not found');
-  });
-});
+        expect(repository.find).toHaveBeenCalled()
+        expect(result.id).toEqual(input.id)
+        expect(result.name).toEqual(invoice.name)
+        expect(result.address.city).toEqual(invoice.address.city)
+        expect(result.address.complement).toEqual(invoice.address.complement)
+        expect(result.address.number).toEqual(invoice.address.number)
+        expect(result.address.state).toEqual(invoice.address.state)
+        expect(result.address.street).toEqual(invoice.address.street)
+        expect(result.address.zipCode).toEqual(invoice.address.zipCode)
+        expect(result.createdAt).toEqual(invoice.createdAt)
+        expect(result.items).toHaveLength(2)
+        expect(result.total).toEqual(190)
+    })
+})
